@@ -1,0 +1,179 @@
+
+################## INPUT FILE ################
+
+Used the MovieLens 100k rating dataset
+- Ratings are in a file called ua.base.
+- Movie item data is in u.item.
+
+################## SPARK SHELL PROGRAM ###############
+
+dhanshrivm@dhanshrivm-VirtualBox:~/Downloads/spark-2.3.0-bin-hadoop2.7$ pyspark
+Python 2.7.12 (default, Dec  4 2017, 14:50:18) 
+[GCC 5.4.0 20160609] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+2018-06-10 16:59:24 WARN  Utils:66 - Your hostname, dhanshrivm-VirtualBox resolves to a loopback address: 127.0.1.1; using 10.0.2.15 instead (on interface enp0s3)
+2018-06-10 16:59:24 WARN  Utils:66 - Set SPARK_LOCAL_IP if you need to bind to another address
+2018-06-10 16:59:25 WARN  NativeCodeLoader:62 - Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+Welcome to
+      ____              __
+     / __/__  ___ _____/ /__
+    _\ \/ _ \/ _ `/ __/  '_/
+   /__ / .__/\_,_/_/ /_/\_\   version 2.3.0
+      /_/
+
+Using Python version 2.7.12 (default, Dec  4 2017 14:50:18)
+SparkSession available as 'spark'.
+>>> 
+>>> import numpy as np
+>>> from pyspark.sql.types import FloatType
+>>> from pyspark.sql.types import StructType
+>>> from pyspark.sql.types import StructField
+>>> from pyspark.sql.types import StringType
+>>> from pyspark.sql.types import IntegerType
+>>> 
+>>> rdd=sc.textFile("/media/sf_Ubuntu_Shared/Movie HW/ml-100k/ua.base",8)
+>>> 
+>>> ratings=rdd.map(lambda x: x.split("\t")).map(lambda x: (int(x[0]),int(x[1]),int(x[2])))     ## Extract User Id, Movie Id, Rating
+>>> 
+>>> groupedMov=ratings.map(lambda x: (x[1],(x[0],x[2])))
+>>> 
+>>> numRatersPerMov=groupedMov.groupByKey().mapValues(lambda v: len(v))
+>>> 
+>>> ratingsWithSize=groupedMov.join(numRatersPerMov).map(lambda (m,((u,r),n)): (u,(m,r,n)))
+>>> 
+>>> 
+>>> ratingsPair=ratingsWithSize.join(ratingsWithSize).filter(lambda (k,((m1,r1,n1),(m2,r2,n2))): m1<m2)
+>>> 
+>>> vectorCalcs=ratingsPair.map(lambda (k,((m1,r1,n1),(m2,r2,n2))): ((m1,m2),(r1*r2,r1,r2,r1*r1,r2*r2,n1,n2)))
+>>> 
+>>> corrRDD=vectorCalcs.groupByKey()
+>>> 
+>>> def calculatePearsonCorrelation(groupSize,ratingProduct,rating1Sum,rating2Sum,rating1NormSq,rating2NormSq): ## Define function to calculate pearson corr
+...     numerator=groupSize*ratingProduct - rating1Sum* rating2Sum
+...     denominator= np.sqrt(groupSize * rating1NormSq - rating1Sum *rating1Sum) * np.sqrt (groupSize * rating2NormSq - rating2Sum *rating2Sum)
+...     return (float(numerator/denominator))
+... 
+>>> def calculateRegularizedCorrelation(groupSize,ratingProduct,rating1Sum,rating2Sum,rating1NormSq,rating2NormSq,PRIOR_COUNT,PRIOR_CORRELATION):       ## Define function to calculate regularized correlation
+...     unregCorr=0.0
+...     unregCorr=calculatePearsonCorrelation(groupSize,ratingProduct,rating1Sum,rating2Sum,rating1NormSq,rating2NormSq)
+...     w=float(groupSize)/(groupSize+ PRIOR_COUNT)
+...     return ( float(w * unregCorr + (1-w) * PRIOR_CORRELATION))
+... 
+>>> 
+>>> 
+>>> def calculateCosineCorrelation(ratingProduct,rating1Norm,rating2Norm):              ## ## Define function to calculate Cosine similarity
+...     return (float(ratingProduct/ (rating1Norm * rating2Norm)))
+... 
+>>> 
+>>> 
+>>> def calculateJaccardCorrelation(inCommon,totalA,totalB):            ## Define function to calculate Jaccard correlation
+...     union=0.0
+...     union=totalA+totalB - inCommon
+...     return (float(inCommon)/union)
+... 
+>>> 
+>>> def calculateCorrelations(tup):                     ## Define function to caculate similarity algorithm
+...     PRIOR_COUNT=0
+...     PRIOR_CORRELATION=10
+...     groupSize=0
+...     ratingProduct=0
+...     rating1Sum=0
+...     rating2Sum=0
+...     rating1NormSq=0
+...     rating2NormSq=0
+...     maxNumRaters1=0
+...     maxNumRaters2=0
+...     for t in tup:
+...             groupSize=groupSize+1
+...             ratingProduct=ratingProduct+t[0]
+...             rating1Sum=rating1Sum+t[1]
+...             rating2Sum=rating2Sum+t[2]
+...             rating1NormSq=rating1NormSq+t[3]
+...             rating2NormSq=rating2NormSq+t[4]
+...             numRaters1=t[5]
+...             if (numRaters1>maxNumRaters1):
+...                     maxNumRaters1=numRaters1
+...             numRaters2=t[6]
+...             if (numRaters2> maxNumRaters2):
+...                     maxNumRaters2=numRaters2
+...     pearson=0.0
+...     cosine=0.0
+...     jaccard=0.0     
+...     regcorr=0.0
+...     pearson=calculatePearsonCorrelation(groupSize,ratingProduct,rating1Sum,rating2Sum,rating1NormSq,rating2NormSq)
+...     cosine= calculateCosineCorrelation(ratingProduct,np.sqrt(rating1NormSq),np.sqrt(rating2NormSq))
+...     jaccard=calculateJaccardCorrelation(groupSize,maxNumRaters1,maxNumRaters2)
+...     regcorr=calculateRegularizedCorrelation(groupSize,ratingProduct,rating1Sum,rating2Sum,rating1NormSq,rating2NormSq,PRIOR_COUNT,PRIOR_CORRELATION)
+...     return (pearson,regcorr,cosine,jaccard)
+... 
+>>> similarities=corrRDD.mapValues(calculateCorrelations)
+>>> 
+>>> mov=sc.textFile("/media/sf_Ubuntu_Shared/Movie HW/ml-100k/u.item")          ## Read movies data
+>>> 
+>>> 
+>>> movNames=mov.map(lambda x: x.split("|")).map(lambda x: (int(x[0]),x[1]))    ## Extract User Id, Movie Id, Rating
+>>> 
+>>> movSchema=StructType([
+... StructField("movieID",IntegerType(),True),
+... StructField("movieName",StringType(),True)
+... ])
+>>> 
+>>> movDF=spark.createDataFrame(movNames,schema=movSchema)              ## Convert MovNames to dataframe
+>>> 
+>>> corrSchema=StructType([
+... StructField("movieID1",IntegerType(),True),
+... StructField("movieID2",IntegerType(),True),
+... StructField("Pearson",FloatType(),True),
+... StructField("RegCorr",FloatType(),True),
+... StructField("Cosine",FloatType(),True),
+... StructField("Jaccard",FloatType(),True)
+... ])
+>>> 
+>>> 
+>>> simTup=similarities.map(lambda (k,v): (k[0],k[1],v[0],v[1],v[2],v[3]))              ## Convert (k,v) pair into single tuple 
+>>> 
+>>> corrDF=spark.createDataFrame(simTup,schema=corrSchema)              ## Convert similarities into dataframe
+>>> 
+>>> movDF.registerTempTable("MovieNames")       ## into SQL table
+>>> 
+>>> corrDF.registerTempTable("MovSimilarity")   ## into SQL table
+>>> 
+>>> 
+>>> movRecommendation=spark.sql("select s1.movieName as movie1, m2.movieName as movie2,s1.Pearson,s1.RegCorr,s1.Cosine,s1.Jaccard from (select movieName,movieID2,Pearson,RegCorr,Cosine,Jaccard from MovSimilarity s left join MovieNames m on s.movieID1=m.movieID) s1 left join MovieNames m2 on s1.movieID2=m2.movieID")		## Merge to get movie names corresponding to movie ids.
+>>> 
+
+################### OUTPUT ##############################
+
+>>> movRecommendation.show()
+
++--------------------+--------------------+-----------+-----------+----------+-----------+
+|              movie1|              movie2|    Pearson|    RegCorr|    Cosine|    Jaccard|
++--------------------+--------------------+-----------+-----------+----------+-----------+
+| Crimson Tide (1995)|Ghost and the Dar...| 0.40216106| 0.40216106| 0.9597094| 0.22596154|
+|     Ref, The (1994)|Ghost and the Dar...| 0.08213711| 0.08213711| 0.9120079| 0.15172414|
+|    Big Night (1996)|Ghost and the Dar...|  -0.242108|  -0.242108| 0.8956579| 0.13733906|
+|What's Eating Gil...|Ghost and the Dar...| 0.18269852| 0.18269852|0.93066305| 0.18032786|
+|Natural Born Kill...|Ghost and the Dar...|-0.02474695|-0.02474695|0.85947007| 0.19587629|
+|Gone with the Win...|Ghost and the Dar...| 0.17609917| 0.17609917| 0.9240516| 0.12970711|
+|   Free Willy (1993)|Ghost and the Dar...|  0.2134004|  0.2134004| 0.9159676| 0.08527132|
+|Kids in the Hall:...|Ghost and the Dar...|-0.42731205|-0.42731205|0.79006785|  0.1409396|
+|Doom Generation, ...|Ghost and the Dar...|        0.5|        0.5|0.98246664| 0.02631579|
+|  Heavy Metal (1981)|Ghost and the Dar...| 0.19037335| 0.19037335|0.91853154|    0.13125|
+|Haunted World of ...|Ghost and the Dar...|        0.0|        0.0| 0.9656091|0.033333335|
+|Spitfire Grill, T...|Ghost and the Dar...|  0.5458151|  0.5458151|  0.969213| 0.14285715|
+|Hudsucker Proxy, ...|Ghost and the Dar...| 0.19249822| 0.19249822| 0.9078251|  0.1185567|
+|    Apollo 13 (1995)|Ghost and the Dar...| 0.29363644| 0.29363644|0.95583826| 0.18092105|
+|Carlito's Way (1993)|Ghost and the Dar...|0.005705443|0.005705443|0.92493755| 0.11643836|
+|Brothers McMullen...|Ghost and the Dar...| -0.1836796| -0.1836796|0.89050883|0.099378884|
+|     Bad Boys (1995)|Ghost and the Dar...|  0.4192436|  0.4192436| 0.9341963| 0.13286713|
+|Dolores Claiborne...|Ghost and the Dar...| 0.20273277| 0.20273277| 0.9466822| 0.17721519|
+|All Dogs Go to He...|Ghost and the Dar...|   0.766965|   0.766965|0.96490127|0.042372882|
+|Usual Suspects, T...|Ghost and the Dar...|0.124238215|0.124238215|0.94226974| 0.17589577|
++--------------------+--------------------+-----------+-----------+----------+-----------+
+only showing top 20 rows
+
+>>> 
+
+
