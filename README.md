@@ -1,5 +1,5 @@
 # data-science-portfolio
-Portfolio of data science projects completed by me for academic, self learning, and hobby purposes.
+Portfolio of data science projects completed by me for academic, self learning, and hobby purposes. Codes are presented in the form of Ipython notebooks and R markdown files.
 
 ## Contents
 * Machine Learning
