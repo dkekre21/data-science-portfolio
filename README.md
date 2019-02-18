@@ -18,4 +18,8 @@ Portfolio of data science projects completed by me for academic, self learning, 
  
   *Toolkit: Python, Univariate time series, multivariate time series, prediction and forecasting*
   
+* Spark ML
+  * [Movie Recommendation](https://github.com/dkekre21/data-science-portfolio/blob/master/Large-Scale-Machine-Learning/Movie-Recommendation-with-Spark-ML/Movie%20recommendation%20with%20Spark%20ML) Generates movie recommendation using similarity e.g. pearson, cosine, jaccard and regularized correlation using pyspark.
+  * [Spam filtering](https://github.com/dkekre21/data-science-portfolio/blob/master/Large-Scale-Machine-Learning/Spam%20Filtering%20with%20Spark%20ML/spam_filter.py) Classifies emails into spam or ham using pyspark.
+  
 * NLP
