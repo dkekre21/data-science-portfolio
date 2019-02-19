@@ -5,6 +5,7 @@ Portfolio of data science projects completed by me for academic, self learning, 
 * Machine Learning
   * [Customer segmentation and CLV](https://github.com/dkekre21/data-science-portfolio/tree/master/Customer-Segmentation-CLV) Identifies   customer types for a durable goods company by analysing the needs and wants. Implements Customer LifetTime Value (CLTV) in order to distinguish customer based on their potential lifetime profits, to aid customer relationship management.
   * [BestBuy propensity model](http://rpubs.com/dkd260/bestbuy) Propensity model for ranking bestbuy customers who have high propensity to buy geek squad protection plan. The data is collected only from Santa Clara Best Buy stores. The dataset, named “BestBuy.csv” includes 3,206 transactions made in March 2017. Please note this is very small dataset and provides analysis for a beginner ML enthusiast.
+  * More projects to be uploaded soon
   
   *Toolkit : Python, R, ggplot, matplotlib*
 * Deep Learning 
