@@ -6,6 +6,10 @@ Portfolio of data science projects completed by me for academic, self learning, 
   * [Customer segmentation and CLV](https://github.com/dkekre21/data-science-portfolio/tree/master/Customer-Segmentation-CLV) identifies   customer types for a durable goods company by analysing the needs and wants. Implements Customer LifetTime Value (CLTV) in order to distinguish customer based on their potential lifetime profits, to aid customer relationship management.
   
   *Toolkit : Python, R, ggplot, matplotlib*
+* Deep Learning 
+  *  Machine translation using LSTM
+  
+  *Toolkit : Python, GCP, keras, nltk, matplotlib*
   
 * Data Analysis and Visualization
   * [World Bank Data Analysis 1991-2007](https://github.com/dkekre21/World-Bank-Data-Analysis-1991-2017/blob/master/Python%20Notebook/Project%202%20-World%20Bank%20Data%20Analysis%201991%20to%202017.ipynb) Compares top 3 populated countries of the world are differentiated in the standard of living and sustenance. India, China & United States are the three countries with highest population and interestingly they are at different steps of nation development. 
