@@ -20,7 +20,7 @@ Portfolio of data science projects completed by me for academic, self learning, 
   *Toolkit : Python, plotly, matplotlib, seaborn*
   
 * Time Series
-  * [Forecasting Market Volatility](https://github.com/dkekre21/data-science-portfolio/blob/master/Forecasting%20Market%20Volatility/VIX_Final_Project.html) Predicts VIX futures prices using different time series models. Based on model predictions devise a strategy that results in making money. 
+  * [Forecasting Market Volatility](https://github.com/dkekre21/data-science-portfolio/blob/master/Forecasting%20Market%20Volatility/VIX_Final_Project.html) Predicts VIX futures prices using different time series models. Models are compared on RMSE score and daily Profit and Loss score. The lowest RMSE and highest money making model is winner.
  
   *Toolkit: Python, Univariate time series, multivariate time series, prediction and forecasting*
   
